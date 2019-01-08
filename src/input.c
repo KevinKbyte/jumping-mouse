@@ -344,16 +344,32 @@ gint snoop_key_press(GtkWidget   *grab_widget,
       event->hardware_keycode == data->hot_keycode)
     {
       if(data->debug)
-	g_printerr("DEBUG: Received hotkey press from device '%s'\n", gdk_device_get_name(dev));
+      {
+          g_printerr("DEBUG: Received hotkey press from device '%s'\n", gdk_device_get_name(dev));
+          g_printerr("wo%d\n", event->state);
+      }
+      g_printerr("%c", event->keyval);
 
       if (event->state & GDK_SHIFT_MASK)
-        clear_screen (data);
+      {
+          g_printerr("THe%d\n", event->state);
+          clear_screen (data);
+      }
       else if (event->state & GDK_CONTROL_MASK)
-        toggle_visibility (data);
+      {
+          toggle_visibility (data);
+          g_printerr("WHAT\n");
+      }
       else if (event->state & GDK_MOD1_MASK)
+      {
         gtk_main_quit ();
-      else
-	  toggle_grab(data, gdk_device_get_associated_device(dev));
+        g_printerr("Heck\n");
+      }
+      else 
+      {
+        toggle_grab(data, gdk_device_get_associated_device(dev));
+        g_printerr("DUDE\n");
+      }
 
       return TRUE;
     }

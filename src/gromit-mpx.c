@@ -466,7 +466,73 @@ void snap_undo_state (GromitData *data)
   data->redo_depth = 0;
 }
 
+void draw_hints (cairo_t *cr, GromitData *data) {
+    FILE *fd;
+    char screen_size_filename[16] = "/tmp/mouse-jump";
+    
+    fd = fopen(screen_size_filename, "r");
 
+    char buffer[10];
+    fread(buffer, 9, 1, fd);
+    fclose(fd);
+
+    char str_x_dim[5], str_y_dim[5];
+
+    size_t n = 5;
+    snprintf(str_x_dim, sizeof(str_x_dim), buffer, n);
+
+    snprintf(str_y_dim, sizeof(str_y_dim), &buffer[5], n);
+
+    char *endx, *endy;
+    int base = 10;
+
+    long X_DIM = strtol(str_x_dim, &endx, base);
+    long Y_DIM = strtol(str_y_dim, &endy, base);
+    /* printf("%ld", X_DIM); */
+    /* printf("%ld", Y_DIM); */
+
+    const int X_KEY_COMBOS = 2;
+    const int X_CHUNK_SIZE = 20;
+
+    const int Y_KEY_COMBOS = 4;
+    const int Y_CHUNK_SIZE = 16;
+
+    const int X_INCREMENTS = X_DIM / X_CHUNK_SIZE;
+    const int Y_INCREMENTS = ceil((Y_DIM / Y_CHUNK_SIZE))+1;
+
+    int X_OFFSET = X_INCREMENTS/2;
+    int Y_OFFSET = Y_INCREMENTS/2;
+    /* printf("%dx", X_OFFSET); */
+    /* printf("%d\n", Y_OFFSET); */
+    cairo_set_source_rgb(cr, 250.0, 0.0, 0.0);
+    cairo_select_font_face (cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+    cairo_set_font_size (cr, 20);
+    char keys[] = "1234567890qwertyuiopasdfghjkl;zxcvbnm,./";
+
+    int i_x = 0;
+    int x_coord, y_coord;
+
+    for (int y = 0; y < Y_CHUNK_SIZE/Y_KEY_COMBOS; ++y) {
+        for (int x = 0; x < X_CHUNK_SIZE/X_KEY_COMBOS; ++x) {
+            x_coord = ( x*X_KEY_COMBOS ) * X_INCREMENTS + X_OFFSET;
+            y_coord = ( y*Y_KEY_COMBOS ) * Y_INCREMENTS + Y_OFFSET;
+            char key[2];
+            snprintf(key, sizeof(key), &keys[i_x], 2);
+            /* printf("%s\n", key); */
+            cairo_move_to (cr, x_coord, y_coord);
+            cairo_show_text(cr, key);
+            i_x+=1;
+        } 
+    }
+    
+    cairo_restore(cr);
+    cairo_stroke(cr);
+
+    data->modified = 1;
+
+    /* cairo_rectangle(cr, quarter_w, quarter_h, quarter_w * 2, quarter_h * 2); */
+    /* cairo_fill(cr); */
+}
 
 void copy_surface (cairo_surface_t *dst, cairo_surface_t *src)
 {
@@ -684,7 +750,6 @@ void setup_main_app (GromitData *data, gboolean activate)
   gdk_rgba_parse(data->black, "#000000");
   gdk_rgba_parse(data->red, "#FF0000");
 
-
   /* 
      CURSORS
   */
@@ -879,7 +944,10 @@ void setup_main_app (GromitData *data, gboolean activate)
   data->default_eraser = paint_context_new (data, GROMIT_ERASER,
 					    data->red, 75, 0, 1);
 
-  
+/* GENERATE HINTS */
+
+  cairo_t *cr = cairo_create(data->backbuffer);
+  draw_hints(cr, data);
 
   gdk_event_handler_set ((GdkEventFunc) main_do_event, data, NULL);
   gtk_key_snooper_install (snoop_key_press, data);

@@ -4,6 +4,9 @@ project(gromit-mpx LANGUAGES C)
 set(target_name gromit-mpx)
 set(version 1.3)
 
+# Debug options
+# set(CMAKE_BUILD_TYPE Debug)
+
 set(CMAKE_C_FLAGS  " ${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-parameter")
 
 configure_file(build-config.h_cmake_in build-config.h)
